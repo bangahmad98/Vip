@@ -2,85 +2,187 @@
 <html lang="id">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pengingat Waktu Sholat</title>
   <link rel="manifest" href="manifest.json" />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" />
-  <script src="https://unpkg.com/@phosphor-icons/web"></script>
   <style>
-    :root {
-      --primary: #00bfa5;
-      --bg-light: #f0f8ff;
-      --bg-dark: #121212;
-      --text-light: #e0f2f1;
-      --text-dark: #333;
-      --card-bg-light: #ffffff;
-      --card-bg-dark: #1f1f1f;
-    }
     body {
-      font-family: 'Inter', sans-serif;
       margin: 0;
-      padding: 0;
-      background: var(--bg-dark);
-      color: var(--text-light);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 100vh;
+      font-family: sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      transition: background 0.3s, color 0.3s;
+    }
+    :root {
+      --bg: #ffffff;
+      --text: #000000;
+    }
+    .dark {
+      --bg: #121212;
+      --text: #ffffff;
+    }
+    header, main {
+      padding: 1rem;
       text-align: center;
     }
-    h1 {
-      margin-top: 1rem;
-      font-size: 2rem;
-      color: var(--primary);
+    button {
+      margin: 5px;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
     }
     #countdown {
+      font-size: 1.5rem;
       margin: 1rem 0;
-      font-size: 1.2rem;
-      font-weight: bold;
     }
-    #jadwal-container {
-      margin: 1rem 0;
-      background: var(--card-bg-dark);
-      padding: 1.5rem;
-      border-radius: 1rem;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-      max-width: 320px;
-      width: 90%;
-    }
-    #jadwal-container p {
-      margin: 0.5rem 0;
-      font-size: 1.1rem;
-    }
-    .icon-container {
-      font-size: 2.5rem;
-      margin-top: 1rem;
-      color: var(--primary);
-      animation: pulse 2s infinite;
-    }
-    @keyframes pulse {
-      0% { transform: scale(1); }
-      50% { transform: scale(1.1); }
-      100% { transform: scale(1); }
-    }
-    footer {
-      margin-top: 2rem;
-      font-size: 0.85rem;
-      color: #999;
+    #dzikirCount {
+      font-size: 2rem;
+      margin-top: 0.5rem;
     }
   </style>
-  <title>Pengingat Waktu Sholat</title>
 </head>
 <body>
-  <h1>Pengingat Waktu Sholat</h1>
-  <div class="icon-container"><i class="ph ph-mosque"></i></div>
-  <div id="countdown">Menghitung waktu sholat berikutnya...</div>
-  <div id="jadwal-container"></div>
-  <audio id="adzanAudio-subuh" src="adzan_subuh.mp3" preload="auto"></audio>
-  <audio id="adzanAudio-biasa" src="adzan_biasa.mp3" preload="auto"></audio>
+  <header>
+    <h1>Pengingat Waktu Sholat</h1>
+    <div>
+      <button onclick="toggleTheme()">Ganti Tema</button>
+      <button onclick="resetDzikir()">Reset Dzikir</button>
+    </div>
+    <input type="text" id="manualLocation" placeholder="Ketik nama kota" />
+    <button onclick="setManualLocation()">Set Lokasi Manual</button>
+  </header>
+
+  <main>
+    <h2 id="location">Mendeteksi lokasi...</h2>
+    <h3 id="nextPrayer">Waktu Sholat Berikutnya:</h3>
+    <div id="countdown">--:--:--</div>
+
+    <audio id="adzanAudio">
+      <source src="adzan_biasa.mp3" type="audio/mpeg" />
+    </audio>
+    <audio id="subuhAudio">
+      <source src="adzan_subuh.mp3" type="audio/mpeg" />
+    </audio>
+
+    <h3>Tasbih Digital</h3>
+    <button onclick="tambahDzikir()">+1</button>
+    <div id="dzikirCount">0</div>
+  </main>
+
   <script src="adhan.js"></script>
+  <script>
+    let isDark = false;
+    let dzikir = 0;
+
+    function toggleTheme() {
+      isDark = !isDark;
+      document.body.classList.toggle("dark", isDark);
+    }
+
+    function tambahDzikir() {
+      dzikir++;
+      document.getElementById("dzikirCount").textContent = dzikir;
+    }
+
+    function resetDzikir() {
+      dzikir = 0;
+      document.getElementById("dzikirCount").textContent = dzikir;
+    }
+
+    function setManualLocation() {
+      const city = document.getElementById("manualLocation").value;
+      if (city) {
+        fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${city}`)
+          .then(res => res.json())
+          .then(data => {
+            if (data && data[0]) {
+              const lat = data[0].lat;
+              const lon = data[0].lon;
+              initAdzan(lat, lon, city);
+            } else {
+              alert("Kota tidak ditemukan!");
+            }
+          });
+      }
+    }
+
+    function initAdzan(lat, lon, locationName = "") {
+      document.getElementById("location").textContent = "Lokasi: " + (locationName || `${lat}, ${lon}`);
+      const params = {
+        method: 'GET',
+      };
+      const today = new Date();
+      const dateStr = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+      fetch(`https://api.aladhan.com/v1/timings/${dateStr}?latitude=${lat}&longitude=${lon}&method=2`, params)
+        .then(res => res.json())
+        .then(data => {
+          const timings = data.data.timings;
+          const jadwal = [
+            { name: "Shubuh", time: timings.Fajr, audio: "subuhAudio" },
+            { name: "Dhuhur", time: timings.Dhuhr, audio: "adzanAudio" },
+            { name: "Ashar", time: timings.Asr, audio: "adzanAudio" },
+            { name: "Maghrib", time: timings.Maghrib, audio: "adzanAudio" },
+            { name: "Isya", time: timings.Isha, audio: "adzanAudio" }
+          ];
+          updateCountdown(jadwal);
+        });
+    }
+
+    function updateCountdown(jadwal) {
+      function checkNext() {
+        const now = new Date();
+        for (const item of jadwal) {
+          const [h, m] = item.time.split(":").map(Number);
+          const prayerTime = new Date();
+          prayerTime.setHours(h, m, 0, 0);
+
+          if (prayerTime > now) {
+            document.getElementById("nextPrayer").textContent = `Selanjutnya: ${item.name}`;
+            startCountdown(prayerTime, item.audio);
+            break;
+          }
+        }
+      }
+      checkNext();
+    }
+
+    function startCountdown(targetTime, audioId) {
+      clearInterval(window.countdownInterval);
+      window.countdownInterval = setInterval(() => {
+        const now = new Date();
+        const diff = Math.floor((targetTime - now) / 1000);
+        if (diff <= 0) {
+          clearInterval(window.countdownInterval);
+          document.getElementById(audioId).play();
+          Notification.requestPermission().then(p => {
+            if (p === "granted") {
+              new Notification("Waktu Sholat Telah Tiba!");
+            }
+          });
+          setTimeout(() => location.reload(), 3000);
+        } else {
+          const h = Math.floor(diff / 3600);
+          const m = Math.floor((diff % 3600) / 60);
+          const s = diff % 60;
+          document.getElementById("countdown").textContent =
+            `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+        }
+      }, 1000);
+    }
+
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(pos => {
+        initAdzan(pos.coords.latitude, pos.coords.longitude);
+      }, () => {
+        document.getElementById("location").textContent = "Gagal mendeteksi lokasi. Gunakan input manual.";
+      });
+    }
+  </script>
 </body>
-<footer>
-  &copy; 2025 Pengingat Waktu Sholat
-</footer>
 </html>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("service-worker.js").then(() => {
+    console.log("Service Worker terdaftar!");
+  });
+}
