@@ -179,10 +179,11 @@
       });
     }
   </script>
-</body>
-</html>
-if ("serviceWorker" in navigator) {
+  if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("service-worker.js").then(() => {
     console.log("Service Worker terdaftar!");
   });
 }
+  
+</body>
+</html>
