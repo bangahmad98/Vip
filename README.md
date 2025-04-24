@@ -9,6 +9,4 @@ Aplikasi web pengingat sholat yang akurat berdasarkan lokasi dan waktu pengguna,
 - Memutar suara adzan saat waktu sholat tiba
 - Notifikasi web otomatis
 
-**Dibuat untuk hosting di GitHub Pages.**
-
 Lisensi: MIT
