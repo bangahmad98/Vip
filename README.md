@@ -3,7 +3,7 @@
 Aplikasi web sederhana yang memberikan pengingat waktu sholat berdasarkan lokasi pengguna, lengkap dengan notifikasi otomatis di browser.
 
 **Coba aplikasi ini secara langsung:**  
-[https://username.github.io/pengingat-waktu-sholat](https://username.github.io/pengingat-waktu-sholat)
+[Pengingat Waktu Sholat ](https://bangahmad98.github.io/Vip)
 
 ## Fitur
 
