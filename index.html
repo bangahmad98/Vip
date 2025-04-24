@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pengingat Waktu Sholat Akurat</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding: 2rem;
+    }
+    h1 {
+      color: #2c3e50;
+    }
+    .prayer-times {
+      margin-top: 2rem;
+    }
+    .prayer-times div {
+      margin: 0.5rem 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Pengingat Waktu Sholat</h1>
+  <p>Jadwal sholat berdasarkan lokasi Anda:</p>
+  <div id="location"></div>
+  <div class="prayer-times" id="prayerTimes"></div>
+  <audio id="adzanAudio" src="https://archive.org/download/AdzanSubuh/Adzan.mp3" preload="auto"></audio>
+
+  <script src="https://cdn.jsdelivr.net/npm/adhan@4.1.1/dist/Adhan.js"></script>
+  <script>
+    function requestNotificationPermission() {
+      if ('Notification' in window && Notification.permission !== 'granted') {
+        Notification.requestPermission();
+      }
+    }
+
+    function scheduleNotification(name, time) {
+      const now = new Date();
+      const delay = time - now;
+
+      if (delay > 0) {
+        setTimeout(() => {
+          if (Notification.permission === 'granted') {
+            new Notification(`Waktu Sholat ${name}`, {
+              body: `Sudah masuk waktu sholat ${name}`,
+            });
+          }
+          document.getElementById("adzanAudio").play();
+        }, delay);
+      }
+    }
+
+    function showPrayerTimes(prayerTimes, date) {
+      const container = document.getElementById('prayerTimes');
+      container.innerHTML = '';
+
+      const names = ['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'];
+      names.forEach(name => {
+        const time = prayerTimes[name.toLowerCase()];
+        const timeStr = time.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        const div = document.createElement('div');
+        div.textContent = `${name}: ${timeStr}`;
+        container.appendChild(div);
+        scheduleNotification(name, time);
+      });
+    }
+
+    function init() {
+      requestNotificationPermission();
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition((position) => {
+          const { latitude, longitude } = position.coords;
+          document.getElementById('location').textContent =
+            `Latitude: ${latitude.toFixed(2)}, Longitude: ${longitude.toFixed(2)}`;
+
+          const date = new Date();
+          const params = adhan.CalculationMethod.MuslimWorldLeague();
+          params.madhab = adhan.Madhab.Shafi;
+
+          const coordinates = new adhan.Coordinates(latitude, longitude);
+          const prayerTimes = new adhan.PrayerTimes(coordinates, date, params);
+
+          showPrayerTimes(prayerTimes, date);
+        }, () => {
+          alert("Gagal mendapatkan lokasi.");
+        });
+      } else {
+        alert("Geolocation tidak didukung.");
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
