@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Pengingat Waktu Sholat</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding: 2rem;
+    }
+    h1 {
+      color: #2c3e50;
+    }
+    .prayer-times {
+      margin-top: 2rem;
+    }
+    .prayer-times div {
+      margin: 0.5rem 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Pengingat Waktu Sholat</h1>
+  <p>Jadwal sholat berdasarkan lokasi Anda:</p>
+  <div id="location"></div>
+  <div class="prayer-times" id="prayerTimes"></div>
+
+  <script>
+    async function fetchPrayerTimes(lat, lng) {
+      const today = new Date();
+      const dateStr = today.toISOString().split('T')[0];
+      const url = `https://api.aladhan.com/v1/timings/${dateStr}?latitude=${lat}&longitude=${lng}&method=2`;
+
+      const res = await fetch(url);
+      const data = await res.json();
+      return data.data.timings;
+    }
+
+    function requestNotificationPermission() {
+      if ('Notification' in window && Notification.permission !== 'granted') {
+        Notification.requestPermission();
+      }
+    }
+
+    function showPrayerTimes(timings) {
+      const container = document.getElementById('prayerTimes');
+      container.innerHTML = '';
+
+      Object.entries(timings).forEach(([name, time]) => {
+        const div = document.createElement('div');
+        div.textContent = `${name}: ${time}`;
+        container.appendChild(div);
+        scheduleNotification(name, time);
+      });
+    }
+
+    function scheduleNotification(name, timeStr) {
+      const now = new Date();
+      const [hours, minutes] = timeStr.split(':').map(Number);
+      const target = new Date();
+      target.setHours(hours, minutes, 0, 0);
+
+      const delay = target - now;
+
+      if (delay > 0) {
+        setTimeout(() => {
+          if (Notification.permission === 'granted') {
+            new Notification(`Waktu Sholat ${name}`, {
+              body: `Sudah masuk waktu sholat ${name}`,
+            });
+          }
+        }, delay);
+      }
+    }
+
+    function init() {
+      requestNotificationPermission();
+
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(async (position) => {
+          const { latitude, longitude } = position.coords;
+          document.getElementById('location').textContent =
+            `Latitude: ${latitude.toFixed(2)}, Longitude: ${longitude.toFixed(2)}`;
+
+          const timings = await fetchPrayerTimes(latitude, longitude);
+          showPrayerTimes(timings);
+        }, () => {
+          alert("Gagal mendapatkan lokasi. Izinkan akses lokasi untuk melanjutkan.");
+        });
+      } else {
+        alert("Geolocation tidak didukung oleh browser Anda.");
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
