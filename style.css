@@ -1,0 +1,34 @@
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background-color: #111;
+  color: #00e6aa;
+  text-align: center;
+}
+
+main {
+  padding: 20px;
+}
+
+.icon {
+  font-size: 48px;
+  margin: 20px 0;
+}
+
+.jadwal {
+  background: #222;
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 20px;
+}
+
+.footer {
+  margin-top: 40px;
+  color: #777;
+}
+
+input {
+  padding: 5px;
+  margin-top: 10px;
+  font-size: 16px;
+}

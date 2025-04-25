@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pengingat Waktu Sholat</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main>
+    <h1>Pengingat Waktu Sholat</h1>
+    <div class="icon">🕌</div>
+    <p id="countdown">Menuju Shubuh: --</p>
+    <div class="jadwal">
+      <p id="shubuh">Shubuh: --</p>
+      <p id="dhuhur">Dhuhur: --</p>
+      <p id="ashar">Ashar: --</p>
+      <p id="maghrib">Maghrib: --</p>
+      <p id="isya">Isya: --</p>
+    </div>
+    <div class="notifikasi">
+      <label for="notifTime">Notifikasi sebelum adzan (menit): </label>
+      <input type="number" id="notifTime" value="5" min="0" />
+    </div>
+    <p class="footer">© 2025 Pengingat Waktu Sholat</p>
+  </main>
+  <script src="script.js"></script>
+</body>
+</html>
